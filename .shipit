@@ -1,0 +1,11 @@
+# auto-generated shipit config file.
+steps = FindVersion, ChangeVersion, CheckChangeLog, DistTest, Commit, Tag, MakeDist, UploadPuppet
+
+# svn.tagpattern = MyProj-%v
+# svn.tagpattern = http://code.example.com/svn/tags/MyProj-%v
+git.push_to = origin
+git.tagpattern = %v
+
+puppet.dir  = /Users/lenz/workspace/infra/puppet
+puppet.file = modules/perl_modules/files/Net-Xero.tgz
+# CheckChangeLog.files = ChangeLog, MyProj.CHANGES
