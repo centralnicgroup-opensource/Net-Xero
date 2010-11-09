@@ -7,6 +7,9 @@ use LWP::UserAgent;
 use HTTP::Request::Common;
 use Data::Random qw(rand_chars);
 use XML::LibXML::Simple qw(XMLin);
+use File::ShareDir 'module_dir';
+use Template::Alloy;
+use Crypt::OpenSSL::RSA;
 
 =head1 NAME
 
@@ -20,10 +23,11 @@ Version 0.01
 
 our $VERSION = '0.01';
 
-has 'debug' => (is => 'rw', isa => 'Bool', default => 0);
+has 'debug' => (is => 'rw', isa => 'Bool', default => 0, predicate => 'is_debug');
 has 'error' => (is => 'rw', isa => 'Str', predicate => 'has_error');
 has 'key' => (is => 'rw', isa => 'Str');
 has 'secret' => (is => 'rw', isa => 'Str');
+has 'cert' => (is => 'rw', isa => 'Str');
 has 'nonce' => (is => 'ro', isa => 'Str', default => join( '', rand_chars( size => 16, set => 'alphanumeric' ) ));
 has 'login_link' => (is => 'rw', isa => 'Str');
 has 'callback_url' => (is => 'rw', isa => 'Str', default => 'http://localhost:3000/callback');
@@ -31,7 +35,11 @@ has 'request_token' => (is => 'rw', isa => 'Str');
 has 'request_secret' => (is => 'rw', isa => 'Str');
 has 'access_token' => (is => 'rw', isa => 'Str');
 has 'access_secret' => (is => 'rw', isa => 'Str');
+#has 'template_path' => (is => 'rw', isa => 'Str', default => module_dir(__PACKAGE__));
+has 'template_path' => (is => 'rw', isa => 'Str');
 #has 'context' => (is => 'rw', isa => 'Str', default => 'sandbox');
+
+
 
 =head1 SYNOPSIS
 
@@ -75,13 +83,14 @@ sub login {
         consumer_secret => $self->secret,
         request_url => 'http://api.xero.com/0/oauth/request_token',
         request_method => 'POST',
-        signature_method => 'HMAC-SHA1',
+        signature_method => 'RSA-SHA1',
         timestamp => time,
         nonce => $self->nonce,
         callback => $self->callback_url,
     );
 
-    $request->sign;
+    my $private_key = Crypt::OpenSSL::RSA->new_private_key($self->cert);
+    $request->sign($private_key);
     my $res = $ua->request(GET $request->to_url);
 
     if ($res->is_success) {
@@ -115,15 +124,15 @@ sub auth {
         consumer_secret => $self->secret,
         request_url => 'http://api.xero.com/0/oauth/access_token',
         request_method => 'POST',
-        signature_method => 'HMAC-SHA1',
+        signature_method => 'RSA-SHA1',
         timestamp => time,
         nonce => $self->nonce,
         callback => $self->callback_url,
         token => $self->request_token,
         token_secret => $self->request_secret,
     );
-
-    $request->sign;
+    my $private_key = Crypt::OpenSSL::RSA->new_private_key($self->cert);
+    $request->sign($private_key);
     my $res = $ua->request(GET $request->to_url);
 
     if ($res->is_success) {
@@ -166,6 +175,10 @@ sub _talk {
     my $method  = shift || 'GET';
     my $content = shift;
 
+    if($content){
+        $content = $self->_template($content);
+    };
+
     my $ua = LWP::UserAgent->new;
 
     my %opts = (
@@ -173,7 +186,7 @@ sub _talk {
         consumer_secret => $self->secret,
         request_url => 'https://api.xero.com/api.xro/2.0/'.$command,
         request_method => $method,
-        signature_method => 'HMAC-SHA1',
+        signature_method => 'RSA-SHA1',
         timestamp => time,
         nonce => $self->nonce,
         #callback => $self->callback_url,
@@ -182,7 +195,8 @@ sub _talk {
     );
     my $request = Net::OAuth->request("protected resource")->new( %opts );
 
-    $request->sign;
+    my $private_key = Crypt::OpenSSL::RSA->new_private_key($self->cert);
+    $request->sign($private_key);
 
     my $res;
     if($method =~ /get/i){
@@ -205,6 +219,19 @@ sub _talk {
 =head2 talk
 
 =cut
+
+sub _template {
+    my ($self, $data) = @_;
+
+    $data->{command} .= '.tt';
+    print STDERR Dumper($data) if $self->is_debug;
+     #my $t = Template::Alloy->new( DEBUG => 'DEBUG_ALL', INCLUDE_PATH => [ $data->{account}->{template_path}, module_dir(__PACKAGE__)."/share/NZRS/EPP" ], );
+    my $t = Template::Alloy->new( INCLUDE_PATH => [ $self->template_path ] );
+    my $template = '';
+    $t->process( 'frame.tt', $data, \$template ) || carp $t->error;
+    print STDERR $template if $self->is_debug;
+    return $template;
+}
 
 =head1 AUTHOR
 
