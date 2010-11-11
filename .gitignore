@@ -12,3 +12,5 @@ cover_db
 *.swp
 *.swo
 MANIFEST.SKIP
+cert/
+examples/
