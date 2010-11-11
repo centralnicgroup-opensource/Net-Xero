@@ -10,6 +10,7 @@ use XML::LibXML::Simple qw(XMLin);
 use File::ShareDir 'module_dir';
 use Template::Alloy;
 use Crypt::OpenSSL::RSA;
+use Data::Dumper;
 
 =head1 NAME
 
@@ -67,7 +68,7 @@ This sets up the initial OAuth handshake and returns the login URL. This
 URL has to be clicked by the user and the the user then has to accept
 the application in xero. 
 
-Dropbox then redirects back to the callback URL defined with
+Xero then redirects back to the callback URL defined with
 C<$self-E<gt>callback_url>. If the user already accepted the application the
 redirect may happen without the user actually clicking anywhere.
 
@@ -97,8 +98,8 @@ sub login {
         my $response = Net::OAuth->response('request token')->from_post_body($res->content);
         $self->request_token($response->token);
         $self->request_secret($response->token_secret);
-        print "Got Request Token ", $response->token, "\n" if $self->debug;
-        print "Got Request Token Secret ", $response->token_secret, "\n" if $self->debug;
+        print "Got Request Token ", $response->token, "\n" if $self->is_debug;
+        print "Got Request Token Secret ", $response->token_secret, "\n" if $self->is_debug;
         return 'http://api.xero.com/0/oauth/authorize?oauth_token='.$response->token.'&oauth_callback='.$self->callback_url;
     }
     else {
@@ -139,8 +140,8 @@ sub auth {
         my $response = Net::OAuth->response('access token')->from_post_body($res->content);
         $self->access_token($response->token);
         $self->access_secret($response->token_secret);
-        print "Got Access Token ", $response->token, "\n" if $self->debug;
-        print "Got Access Token Secret ", $response->token_secret, "\n" if $self->debug;
+        print "Got Access Token ", $response->token, "\n" if $self->is_debug;
+        print "Got Access Token Secret ", $response->token_secret, "\n" if $self->is_debug;
     }
     else {
         $self->error($res->status_line);
@@ -158,6 +159,24 @@ sub accounts {
     my $self = shift;
 
     return $self->_talk('Accounts');
+}
+
+sub create_credit_note {
+    my ($self, $data) = @_;
+    $data->{command} = 'create_credit_note';
+    return $self->_talk('CreditNotes', 'POST', $data);
+}
+
+sub create_invoice {
+    my ($self, $data) = @_;
+    $data->{command} = 'create_invoice';
+    return $self->_talk('Invoices', 'POST', $data);
+}
+
+sub approve_credit_note {
+    my ($self, $data) = @_;
+    $data->{command} = 'approve_credit_note';
+    return $self->_talk('CreditNotes', 'POST', $data);
 }
 
 =head1 INTERNAL API
@@ -188,7 +207,7 @@ sub _talk {
         request_method => $method,
         signature_method => 'RSA-SHA1',
         timestamp => time,
-        nonce => $self->nonce,
+        nonce => join( '', rand_chars( size => 16, set => 'alphanumeric') ),
         #callback => $self->callback_url,
         token => $self->access_token,
         token_secret => $self->access_secret,
@@ -206,12 +225,13 @@ sub _talk {
     }
 
     if ($res->is_success) {
-        print "Got Content ", $res->content, "\n" if $self->debug;
+        print "Got Content ", $res->content, "\n" if $self->is_debug;
         return XMLin($res->content);
     }
     else {
-        $self->error($res->status_line);
+        #$self->error($res->status_line);
         warn "Something went wrong: ".$res->status_line;
+        $self->error($res->content);
     }
     return;
 }
@@ -225,10 +245,13 @@ sub _template {
 
     $data->{command} .= '.tt';
     print STDERR Dumper($data) if $self->is_debug;
-     #my $t = Template::Alloy->new( DEBUG => 'DEBUG_ALL', INCLUDE_PATH => [ $data->{account}->{template_path}, module_dir(__PACKAGE__)."/share/NZRS/EPP" ], );
-    my $t = Template::Alloy->new( INCLUDE_PATH => [ $self->template_path ] );
+    if($self->is_debug){
+        my $t = Template::Alloy->new( DEBUG => 'DEBUG_ALL', INCLUDE_PATH => [ $self->template_path ] );
+    } else {
+        my $t = Template::Alloy->new( INCLUDE_PATH => [ $self->template_path ] );
+    }
     my $template = '';
-    $t->process( 'frame.tt', $data, \$template ) || carp $t->error;
+    $t->process( 'frame.tt', $data, \$template ) || die $t->error;
     print STDERR $template if $self->is_debug;
     return $template;
 }
