@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.3     2010-11-11T15:56:30
+        changed the API to make it easier to extend
+
 0.2     2010-11-11T14:36:48
         fixed Makefile to install the shared directory
 
