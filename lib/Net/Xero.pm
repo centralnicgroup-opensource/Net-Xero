@@ -155,16 +155,18 @@ accounts polls the users accoutns from xero.
 
 =cut
 
-sub accounts {
-    my $self = shift;
-
-    return $self->_talk('Accounts');
+sub get {
+    my ($self, $command, $data) = @_;
+    $data->{command} = $command;
+    my $path = join('', map(ucfirst, split(/_/, $command)));
+    return $self->_talk($path, 'GET', $data);
 }
 
-sub create_credit_note {
-    my ($self, $data) = @_;
-    $data->{command} = 'create_credit_note';
-    return $self->_talk('CreditNotes', 'POST', $data);
+sub post {
+    my ($self, $command, $data) = @_;
+    $data->{command} = $command;
+    my $path = join('', map(ucfirst, split(/_/, $command)));
+    return $self->_talk($path, 'POST', $data);
 }
 
 sub create_invoice {
