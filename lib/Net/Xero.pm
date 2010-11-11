@@ -18,11 +18,11 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.01
+Version 0.1.01
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.1';
 
 has 'debug' => (is => 'rw', isa => 'Bool', default => 0, predicate => 'is_debug');
 has 'error' => (is => 'rw', isa => 'Str', predicate => 'has_error');
@@ -245,10 +245,11 @@ sub _template {
 
     $data->{command} .= '.tt';
     print STDERR Dumper($data) if $self->is_debug;
+    my $t;
     if($self->is_debug){
-        my $t = Template::Alloy->new( DEBUG => 'DEBUG_ALL', INCLUDE_PATH => [ $self->template_path ] );
+        $t = Template::Alloy->new( DEBUG => 'DEBUG_ALL', INCLUDE_PATH => [ $self->template_path ] );
     } else {
-        my $t = Template::Alloy->new( INCLUDE_PATH => [ $self->template_path ] );
+        $t = Template::Alloy->new( INCLUDE_PATH => [ $self->template_path ] );
     }
     my $template = '';
     $t->process( 'frame.tt', $data, \$template ) || die $t->error;

@@ -6,6 +6,6 @@ steps = FindVersion, ChangeVersion, CheckChangeLog, DistTest, Commit, Tag, MakeD
 git.push_to = origin
 git.tagpattern = %v
 
-puppet.dir  = /Users/lenz/workspace/infra/puppet
+puppet.dir  = /Users/lenz/iwmn/puppet
 puppet.file = modules/perl_modules/files/Net-Xero.tgz
 # CheckChangeLog.files = ChangeLog, MyProj.CHANGES
