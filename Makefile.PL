@@ -20,6 +20,7 @@ requires 'Crypt::OpenSSL::RSA';
 
 
 auto_install;
+install_share  'share/Net-Xero';
 
 WriteAll;
 
