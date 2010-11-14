@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.4     2010-11-15T10:02:26
+        fixed package building
+
 0.3     2010-11-11T15:56:30
         changed the API to make it easier to extend
 
