@@ -18,11 +18,11 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.5.5.5.4.4
+Version 0.6.5
 
 =cut
 
-our $VERSION = '0.5';
+our $VERSION = '0.6';
 
 has 'debug' => (is => 'rw', isa => 'Bool', default => 0, predicate => 'is_debug');
 has 'error' => (is => 'rw', isa => 'Str', predicate => 'has_error');
@@ -36,9 +36,8 @@ has 'request_token' => (is => 'rw', isa => 'Str');
 has 'request_secret' => (is => 'rw', isa => 'Str');
 has 'access_token' => (is => 'rw', isa => 'Str');
 has 'access_secret' => (is => 'rw', isa => 'Str');
-#has 'template_path' => (is => 'rw', isa => 'Str', default => module_dir(__PACKAGE__));
-has 'template_path' => (is => 'rw', isa => 'Str');
-#has 'context' => (is => 'rw', isa => 'Str', default => 'sandbox');
+has 'template_path' => (is => 'rw', isa => 'Str', default => module_dir(__PACKAGE__));
+#has 'template_path' => (is => 'rw', isa => 'Str');
 
 
 
