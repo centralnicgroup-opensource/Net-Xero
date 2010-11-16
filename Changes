@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.5     2010-11-16T18:27:44
+        added set_cert method
+
 0.4     2010-11-15T10:02:26
         fixed package building
 

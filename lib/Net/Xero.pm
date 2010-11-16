@@ -18,11 +18,11 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.4.4
+Version 0.5.5.5.4.4
 
 =cut
 
-our $VERSION = '0.4';
+our $VERSION = '0.5';
 
 has 'debug' => (is => 'rw', isa => 'Bool', default => 0, predicate => 'is_debug');
 has 'error' => (is => 'rw', isa => 'Str', predicate => 'has_error');
@@ -146,6 +146,18 @@ sub auth {
     else {
         $self->error($res->status_line);
         warn "Something went wrong: ".$res->status_line;
+    }
+}
+
+sub set_cert {
+    my ($self, $path) = @_;
+
+    if(-f $path){
+        open(CERT, '<', $path) 
+            or warn("Could not read certificate at: $path: ".$@);
+        my @lines = <CERT>;
+        close CERT;
+        $self->cert(join('\n', @lines));
     }
 }
 
