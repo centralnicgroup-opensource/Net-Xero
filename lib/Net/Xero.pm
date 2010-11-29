@@ -18,11 +18,11 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.6.5
+Version 0.7.6.5
 
 =cut
 
-our $VERSION = '0.6';
+our $VERSION = '0.7';
 
 has 'debug' => (is => 'rw', isa => 'Bool', default => 0, predicate => 'is_debug');
 has 'error' => (is => 'rw', isa => 'Str', predicate => 'has_error');

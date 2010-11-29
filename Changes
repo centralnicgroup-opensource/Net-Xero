@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.7     2010-11-29T17:34:47
+        per line item tax definition if present
+
 0.6     2010-11-17T10:22:46
         fixed the template path
 
