@@ -38,6 +38,7 @@
       [%- END %]
       </Tracking>
       [%- END %]
+      [%- IF line.tax_type %]<TaxType>[% line.tax_type %]</TaxType>[% END %]
     </LineItem>
   [%- END %]
   </LineItems>
