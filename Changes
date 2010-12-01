@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.8     2010-12-01T12:56:06
+        change the template path to the dist_dir
+
 0.7     2010-11-29T17:34:47
         per line item tax definition if present
 

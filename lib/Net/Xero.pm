@@ -7,7 +7,7 @@ use LWP::UserAgent;
 use HTTP::Request::Common;
 use Data::Random qw(rand_chars);
 use XML::LibXML::Simple qw(XMLin);
-use File::ShareDir 'module_dir';
+use File::ShareDir 'dist_dir';
 use Template::Alloy;
 use Crypt::OpenSSL::RSA;
 use Data::Dumper;
@@ -18,11 +18,11 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.7.6.5
+Version 0.8.8.7
 
 =cut
 
-our $VERSION = '0.7';
+our $VERSION = '0.8';
 
 has 'debug' => (is => 'rw', isa => 'Bool', default => 0, predicate => 'is_debug');
 has 'error' => (is => 'rw', isa => 'Str', predicate => 'has_error');
@@ -36,7 +36,7 @@ has 'request_token' => (is => 'rw', isa => 'Str');
 has 'request_secret' => (is => 'rw', isa => 'Str');
 has 'access_token' => (is => 'rw', isa => 'Str');
 has 'access_secret' => (is => 'rw', isa => 'Str');
-has 'template_path' => (is => 'rw', isa => 'Str', default => module_dir(__PACKAGE__));
+has 'template_path' => (is => 'rw', isa => 'Str', default => (-d dist_dir('Net-Xero') ? dist_dir('Net-Xero') : {}));
 #has 'template_path' => (is => 'rw', isa => 'Str');
 
 
