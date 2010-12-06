@@ -1,0 +1,12 @@
+<Payments>
+  <Payment>
+    <Invoice>
+      <InvoiceNumber>[% invoice %]</InvoiceNumber>
+    </Invoice>
+    <Account>
+      <Code>[% account %]</Code>
+    </Account>
+    <Date>[% date %]</Date>
+    <Amount>[% amount %]</Amount>
+  </Payment>
+</Payments>

@@ -2,9 +2,9 @@ package Net::Xero;
 
 use Mouse;
 use Net::OAuth;
-use Template::Alloy;
 use LWP::UserAgent;
 use HTTP::Request::Common;
+use Template::Alloy;
 use Data::Random qw(rand_chars);
 use XML::LibXML::Simple qw(XMLin);
 use File::ShareDir 'dist_dir';
@@ -173,11 +173,25 @@ sub get {
     return $self->_talk($path, 'GET', $data);
 }
 
+sub  get_inv_by_ref {
+    my($self, $ref) = @_;
+
+    my $path = 'Invoices?where=Reference.ToString()=="'.$ref.'"';
+    return $self->_talk($path, 'GET');
+}
+
 sub post {
     my ($self, $command, $data) = @_;
     $data->{command} = $command;
     my $path = join('', map(ucfirst, split(/_/, $command)));
     return $self->_talk($path, 'POST', $data);
+}
+
+sub put {
+    my ($self, $command, $data) = @_;
+    $data->{command} = $command;
+    my $path = join('', map(ucfirst, split(/_/, $command)));
+    return $self->_talk($path, 'PUT', $data);
 }
 
 sub create_invoice {
@@ -231,10 +245,13 @@ sub _talk {
     $request->sign($private_key);
 
     my $res;
+    #my $req = HTTP::Request->new($method => $request->to_url);
     if($method =~ /get/i){
-        $res = $ua->get($request->to_url);
+        $res = $ua->request(GET $request->to_url);
+    } elsif($method =~ /put/i) {
+        $res = $ua->request(PUT $request->to_url, Content_Type => 'form-data', Content => $content );
     } else {
-        $res = $ua->post($request->to_url, Content_Type => 'form-data', Content => $content );
+        $res = $ua->request(POST $request->to_url, Content_Type => 'form-data', Content => $content );
     }
 
     if ($res->is_success) {

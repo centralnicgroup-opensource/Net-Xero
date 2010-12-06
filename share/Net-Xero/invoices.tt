@@ -1,5 +1,5 @@
 <Invoice>
-<Reference>[% reference %]</Reference>
+  <Reference>[% reference %]</Reference>
   <Type>[%- IF type == 'pay' %]ACCPAY[%- ELSE %]ACCREC[%- END %]</Type>
   <Status>[% status || 'DRAFT' %]</Status>
   [%- IF currency %]<CurrencyCode>[% currency %]</CurrencyCode>[%- END %]
