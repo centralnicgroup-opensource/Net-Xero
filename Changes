@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.10    2011-01-13T11:53:01
+        tested payments and working template
+
 0.9     2010-12-07T12:58:16
         added payments command
 
