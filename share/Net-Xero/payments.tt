@@ -8,5 +8,6 @@
     </Account>
     <Date>[% date %]</Date>
     <Amount>[% amount %]</Amount>
+    <CurrencyCode>[% currency %]</CurrencyCode>
   </Payment>
 </Payments>
