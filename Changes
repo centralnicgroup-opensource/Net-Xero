@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.11    2011-12-02T12:27:54
+        upated to conform with latest API changes and URLs
+
 0.10    2011-01-13T11:53:01
         tested payments and working template
 

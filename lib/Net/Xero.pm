@@ -18,7 +18,7 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.11
+Version 0.11.11.11
 
 =cut
 
