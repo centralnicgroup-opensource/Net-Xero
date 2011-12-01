@@ -32,7 +32,7 @@ has 'api_url' => (
 has 'ua' => (
     is      => 'rw',
     isa     => 'LWP::UserAgent',
-    default => LWP::UserAgent->new(),
+    default => sub { new LWP::UserAgent },
 );
 has 'debug' => (
     is        => 'rw',
