@@ -18,28 +18,58 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.10.9.9.8.8.7
+Version 0.11
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
-has 'debug' => (is => 'rw', isa => 'Bool', default => 0, predicate => 'is_debug');
-has 'error' => (is => 'rw', isa => 'Str', predicate => 'has_error');
-has 'key' => (is => 'rw', isa => 'Str');
+has 'api_url' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => 'https://api.xero.com/',
+);
+has 'ua' => (
+    is      => 'rw',
+    isa     => 'LWP::UserAgent',
+    default => LWP::UserAgent->new(),
+);
+has 'debug' => (
+    is        => 'rw',
+    isa       => 'Bool',
+    default   => 0,
+    predicate => 'is_debug',
+);
+has 'error' => (
+    is        => 'rw',
+    isa       => 'Str',
+    predicate => 'has_error',
+);
+has 'key'    => (is => 'rw', isa => 'Str');
 has 'secret' => (is => 'rw', isa => 'Str');
-has 'cert' => (is => 'rw', isa => 'Str');
-has 'nonce' => (is => 'ro', isa => 'Str', default => join( '', rand_chars( size => 16, set => 'alphanumeric' ) ));
+has 'cert'   => (is => 'rw', isa => 'Str');
+has 'nonce'  => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => join('', rand_chars(size => 16, set => 'alphanumeric')),
+);
 has 'login_link' => (is => 'rw', isa => 'Str');
-has 'callback_url' => (is => 'rw', isa => 'Str', default => 'http://localhost:3000/callback');
-has 'request_token' => (is => 'rw', isa => 'Str');
+has 'callback_url' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => 'http://localhost:3000/callback',
+);
+has 'request_token'  => (is => 'rw', isa => 'Str');
 has 'request_secret' => (is => 'rw', isa => 'Str');
-has 'access_token' => (is => 'rw', isa => 'Str');
-has 'access_secret' => (is => 'rw', isa => 'Str');
-has 'template_path' => (is => 'rw', isa => 'Str', default => (-d dist_dir('Net-Xero') ? dist_dir('Net-Xero') : {}));
+has 'access_token'   => (is => 'rw', isa => 'Str');
+has 'access_secret'  => (is => 'rw', isa => 'Str');
+has 'template_path'  => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => (-d dist_dir('Net-Xero') ? dist_dir('Net-Xero') : {}),
+);
+
 #has 'template_path' => (is => 'rw', isa => 'Str');
-
-
 
 =head1 SYNOPSIS
 
@@ -65,7 +95,7 @@ if you don't export anything, such as for a purely object-oriented module.
 
 This sets up the initial OAuth handshake and returns the login URL. This
 URL has to be clicked by the user and the the user then has to accept
-the application in xero. 
+the application in xero.
 
 Xero then redirects back to the callback URL defined with
 C<$self-E<gt>callback_url>. If the user already accepted the application the
@@ -76,34 +106,40 @@ redirect may happen without the user actually clicking anywhere.
 sub login {
     my $self = shift;
 
-    my $ua = LWP::UserAgent->new;
-
     my $request = Net::OAuth->request("request token")->new(
-        consumer_key => $self->key,
-        consumer_secret => $self->secret,
-        request_url => 'http://api.xero.com/0/oauth/request_token',
-        request_method => 'POST',
+        consumer_key     => $self->key,
+        consumer_secret  => $self->secret,
+        request_url      => $self->api_url . '/oauth/RequestToken',
+        request_method   => 'POST',
         signature_method => 'RSA-SHA1',
-        timestamp => time,
-        nonce => $self->nonce,
-        callback => $self->callback_url,
+        timestamp        => time,
+        nonce            => $self->nonce,
+        callback         => $self->callback_url,
     );
 
     my $private_key = Crypt::OpenSSL::RSA->new_private_key($self->cert);
     $request->sign($private_key);
-    my $res = $ua->request(GET $request->to_url);
+    my $res = $self->ua->request(GET $request->to_url);
 
     if ($res->is_success) {
-        my $response = Net::OAuth->response('request token')->from_post_body($res->content);
+        my $response =
+            Net::OAuth->response('request token')
+            ->from_post_body($res->content);
         $self->request_token($response->token);
         $self->request_secret($response->token_secret);
         print "Got Request Token ", $response->token, "\n" if $self->is_debug;
-        print "Got Request Token Secret ", $response->token_secret, "\n" if $self->is_debug;
-        return 'http://api.xero.com/0/oauth/authorize?oauth_token='.$response->token.'&oauth_callback='.$self->callback_url;
+        print "Got Request Token Secret ", $response->token_secret, "\n"
+            if $self->is_debug;
+        return
+              $self->api_url
+            . '/oauth/Authorize?oauth_token='
+            . $response->token
+            . '&oauth_callback='
+            . $self->callback_url;
     }
     else {
         $self->error($res->status_line);
-        warn "Something went wrong: ".$res->status_line;
+        warn "Something went wrong: " . $res->status_line;
     }
 }
 
@@ -118,42 +154,43 @@ after login.
 sub auth {
     my $self = shift;
 
-    my $ua = LWP::UserAgent->new;
     my $request = Net::OAuth->request("access token")->new(
-        consumer_key => $self->key,
-        consumer_secret => $self->secret,
-        request_url => 'http://api.xero.com/0/oauth/access_token',
-        request_method => 'POST',
+        consumer_key     => $self->key,
+        consumer_secret  => $self->secret,
+        request_url      => $self->api_url . '/oauth/AccessToken',
+        request_method   => 'POST',
         signature_method => 'RSA-SHA1',
-        timestamp => time,
-        nonce => $self->nonce,
-        callback => $self->callback_url,
-        token => $self->request_token,
-        token_secret => $self->request_secret,
+        timestamp        => time,
+        nonce            => $self->nonce,
+        callback         => $self->callback_url,
+        token            => $self->request_token,
+        token_secret     => $self->request_secret,
     );
     my $private_key = Crypt::OpenSSL::RSA->new_private_key($self->cert);
     $request->sign($private_key);
-    my $res = $ua->request(GET $request->to_url);
+    my $res = $self->ua->request(GET $request->to_url);
 
     if ($res->is_success) {
-        my $response = Net::OAuth->response('access token')->from_post_body($res->content);
+        my $response =
+            Net::OAuth->response('access token')->from_post_body($res->content);
         $self->access_token($response->token);
         $self->access_secret($response->token_secret);
         print "Got Access Token ", $response->token, "\n" if $self->is_debug;
-        print "Got Access Token Secret ", $response->token_secret, "\n" if $self->is_debug;
+        print "Got Access Token Secret ", $response->token_secret, "\n"
+            if $self->is_debug;
     }
     else {
         $self->error($res->status_line);
-        warn "Something went wrong: ".$res->status_line;
+        warn "Something went wrong: " . $res->status_line;
     }
 }
 
 sub set_cert {
     my ($self, $path) = @_;
 
-    if(-f $path){
-        open(CERT, '<', $path) 
-            or warn("Could not read certificate at: $path: ".$@);
+    if (-f $path) {
+        open(CERT, '<', $path)
+            or warn("Could not read certificate at: $path: " . $@);
         my @lines = <CERT>;
         close CERT;
         $self->cert(join('\n', @lines));
@@ -173,10 +210,10 @@ sub get {
     return $self->_talk($path, 'GET', $data);
 }
 
-sub  get_inv_by_ref {
-    my($self, $ref) = @_;
+sub get_inv_by_ref {
+    my ($self, $ref) = @_;
 
-    my $path = 'Invoices?where=Reference.ToString()=="'.$ref.'"';
+    my $path = 'Invoices?where=Reference.ToString()=="' . $ref . '"';
     return $self->_talk($path, 'GET');
 }
 
@@ -216,42 +253,47 @@ normally not need to access this directly.
 =cut
 
 sub _talk {
-    my $self    = shift;
-    my $command = shift;
-    my $method  = shift || 'GET';
-    my $content = shift;
+    my ($self, $command, $method, $content) = @_;
 
-    if($content){
+    if ($content) {
         $content = $self->_template($content);
-    };
-
-    my $ua = LWP::UserAgent->new;
+    }
 
     my %opts = (
-        consumer_key => $self->key,
-        consumer_secret => $self->secret,
-        request_url => 'https://api.xero.com/api.xro/2.0/'.$command,
-        request_method => $method,
+        consumer_key     => $self->key,
+        consumer_secret  => $self->secret,
+        request_url      => $self->api_url . '/api.xro/2.0/' . $command,
+        request_method   => $method,
         signature_method => 'RSA-SHA1',
-        timestamp => time,
-        nonce => join( '', rand_chars( size => 16, set => 'alphanumeric') ),
-        #callback => $self->callback_url,
-        token => $self->access_token,
+        timestamp        => time,
+        nonce        => join('', rand_chars(size => 16, set => 'alphanumeric')),
+        token        => $self->access_token,
         token_secret => $self->access_secret,
     );
-    my $request = Net::OAuth->request("protected resource")->new( %opts );
+    my $request = Net::OAuth->request("protected resource")->new(%opts);
 
     my $private_key = Crypt::OpenSSL::RSA->new_private_key($self->cert);
     $request->sign($private_key);
 
     my $res;
+
     #my $req = HTTP::Request->new($method => $request->to_url);
-    if($method =~ /get/i){
-        $res = $ua->request(GET $request->to_url);
-    } elsif($method =~ /put/i) {
-        $res = $ua->request(PUT $request->to_url, Content_Type => 'form-data', Content => $content );
-    } else {
-        $res = $ua->request(POST $request->to_url, Content_Type => 'form-data', Content => $content );
+    if ($method =~ /get/i) {
+        $res = $self->ua->request(GET $request->to_url);
+    }
+    elsif ($method =~ /put/i) {
+        $res = $self->ua->request(
+            PUT $request->to_url,
+            Content_Type => 'form-data',
+            Content      => $content
+        );
+    }
+    else {
+        $res = $self->ua->request(
+            POST $request->to_url,
+            Content_Type => 'form-data',
+            Content      => $content
+        );
     }
 
     if ($res->is_success) {
@@ -259,8 +301,9 @@ sub _talk {
         return XMLin($res->content);
     }
     else {
+
         #$self->error($res->status_line);
-        warn "Something went wrong: ".$res->status_line;
+        warn "Something went wrong: " . $res->status_line;
         $self->error($res->content);
     }
     return;
@@ -276,13 +319,16 @@ sub _template {
     $data->{command} .= '.tt';
     print STDERR Dumper($data) if $self->is_debug;
     my $t;
-    if($self->is_debug){
-        $t = Template::Alloy->new( DEBUG => 'DEBUG_ALL', INCLUDE_PATH => [ $self->template_path ] );
-    } else {
-        $t = Template::Alloy->new( INCLUDE_PATH => [ $self->template_path ] );
+    if ($self->is_debug) {
+        $t = Template::Alloy->new(
+            DEBUG        => 'DEBUG_ALL',
+            INCLUDE_PATH => [ $self->template_path ]);
+    }
+    else {
+        $t = Template::Alloy->new(INCLUDE_PATH => [ $self->template_path ]);
     }
     my $template = '';
-    $t->process( 'frame.tt', $data, \$template ) || die $t->error;
+    $t->process('frame.tt', $data, \$template) || die $t->error;
     print STDERR $template if $self->is_debug;
     return $template;
 }
@@ -346,4 +392,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Net::Xero
+__PACKAGE__->meta->make_immutable();
