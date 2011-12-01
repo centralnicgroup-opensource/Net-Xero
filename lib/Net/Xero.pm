@@ -185,6 +185,10 @@ sub auth {
     }
 }
 
+=head2 set_cert
+
+=cut
+
 sub set_cert {
     my ($self, $path) = @_;
 
@@ -197,9 +201,38 @@ sub set_cert {
     }
 }
 
-=head2 accounts
+=head2 get_inv_by_ref
 
-accounts polls the users accoutns from xero.
+=cut
+
+sub get_inv_by_ref {
+    my ($self, $ref) = @_;
+
+    my $path = 'Invoices?where=Reference.ToString()=="' . $ref . '"';
+    return $self->_talk($path, 'GET');
+}
+
+=head2 create_invoice
+
+=cut
+
+sub create_invoice {
+    my ($self, $data) = @_;
+    $data->{command} = 'create_invoice';
+    return $self->_talk('Invoices', 'POST', $data);
+}
+
+=head2 approve_credit_note
+
+=cut
+
+sub approve_credit_note {
+    my ($self, $data) = @_;
+    $data->{command} = 'approve_credit_note';
+    return $self->_talk('CreditNotes', 'POST', $data);
+}
+
+=head2 get
 
 =cut
 
@@ -210,12 +243,9 @@ sub get {
     return $self->_talk($path, 'GET', $data);
 }
 
-sub get_inv_by_ref {
-    my ($self, $ref) = @_;
+=head2 post
 
-    my $path = 'Invoices?where=Reference.ToString()=="' . $ref . '"';
-    return $self->_talk($path, 'GET');
-}
+=cut
 
 sub post {
     my ($self, $command, $data) = @_;
@@ -224,6 +254,10 @@ sub post {
     return $self->_talk($path, 'POST', $data);
 }
 
+=head2 put
+
+=cut
+
 sub put {
     my ($self, $command, $data) = @_;
     $data->{command} = $command;
@@ -231,17 +265,6 @@ sub put {
     return $self->_talk($path, 'PUT', $data);
 }
 
-sub create_invoice {
-    my ($self, $data) = @_;
-    $data->{command} = 'create_invoice';
-    return $self->_talk('Invoices', 'POST', $data);
-}
-
-sub approve_credit_note {
-    my ($self, $data) = @_;
-    $data->{command} = 'approve_credit_note';
-    return $self->_talk('CreditNotes', 'POST', $data);
-}
 
 =head1 INTERNAL API
 
