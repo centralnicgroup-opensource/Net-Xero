@@ -12,17 +12,19 @@ use Template::Alloy;
 use Crypt::OpenSSL::RSA;
 use Data::Dumper;
 
+$Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
+
 =head1 NAME
 
 Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.11.11.11
+Version 0.12
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 has 'api_url' => (
     is      => 'rw',
@@ -265,7 +267,6 @@ sub put {
     return $self->_talk($path, 'PUT', $data);
 }
 
-
 =head1 INTERNAL API
 
 =head2 _talk
@@ -277,10 +278,6 @@ normally not need to access this directly.
 
 sub _talk {
     my ($self, $command, $method, $content) = @_;
-
-    if ($content) {
-        $content = $self->_template($content);
-    }
 
     my %opts = (
         consumer_key     => $self->key,
@@ -295,28 +292,25 @@ sub _talk {
     );
     my $request = Net::OAuth->request("protected resource")->new(%opts);
 
+    $request->method($method);
+    if ($content) {
+        $content = $self->_template($content);
+        $request->content($content);
+        $request->header('Content-Type' => 'form_data');
+    }
+
     my $private_key = Crypt::OpenSSL::RSA->new_private_key($self->cert);
     $request->sign($private_key);
 
     my $res;
-
-    #my $req = HTTP::Request->new($method => $request->to_url);
     if ($method =~ /get/i) {
         $res = $self->ua->request(GET $request->to_url);
     }
     elsif ($method =~ /put/i) {
-        $res = $self->ua->request(
-            PUT $request->to_url,
-            Content_Type => 'form-data',
-            Content      => $content
-        );
+        $res = $self->ua->request(PUT $request->to_url);
     }
     else {
-        $res = $self->ua->request(
-            POST $request->to_url,
-            Content_Type => 'form-data',
-            Content      => $content
-        );
+        $res = $self->ua->request(POST $request->to_url);
     }
 
     if ($res->is_success) {
@@ -324,10 +318,8 @@ sub _talk {
         return XMLin($res->content);
     }
     else {
-
-        #$self->error($res->status_line);
         warn "Something went wrong: " . $res->status_line;
-        $self->error($res->content);
+        $self->error($res->status_line . " " . $res->content);
     }
     return;
 }
