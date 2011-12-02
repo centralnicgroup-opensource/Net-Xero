@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.12    2011-12-02T22:25:34
+        sign post data before sending
+
 0.11    2011-12-02T12:27:54
         upated to conform with latest API changes and URLs
 
