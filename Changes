@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.14    2011-12-10T11:12:13
+        removed calculated values from templates, let xero do this
+
 0.13    2011-12-09T19:41:12
         major rewrite of internal _talk() method, simplified
         fixed reading cert from file
