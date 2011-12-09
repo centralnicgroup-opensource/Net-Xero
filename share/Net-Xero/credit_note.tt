@@ -32,9 +32,4 @@
     </LineItem>
   [%- END %]
   </LineItems>
-  [%- IF tax %]
-  <TotalTax>[% tax %]</TotalTax>
-  <SubTotal>[% net %]</SubTotal>
-  [%- END %]
-  <Total>[% total %]</Total>
 </CreditNote>
