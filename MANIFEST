@@ -11,6 +11,7 @@ share/Net-Xero/create_credit_note.tt
 share/Net-Xero/credit_note.tt
 share/Net-Xero/frame.tt
 share/Net-Xero/invoices.tt
+share/Net-Xero/items.tt
 share/Net-Xero/payments.tt
 t/00-load.t
 t/boilerplate.t

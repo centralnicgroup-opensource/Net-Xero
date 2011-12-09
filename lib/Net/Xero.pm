@@ -1,15 +1,17 @@
 package Net::Xero;
 
+use 5.010;
 use Mouse;
 use Net::OAuth;
 use LWP::UserAgent;
-use HTTP::Request::Common;
 use Template::Alloy;
+use HTTP::Request::Common;
 use Data::Random qw(rand_chars);
 use XML::LibXML::Simple qw(XMLin);
 use File::ShareDir 'dist_dir';
 use Template::Alloy;
 use Crypt::OpenSSL::RSA;
+use URI::Escape;
 use Data::Dumper;
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
@@ -20,16 +22,16 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.12.12
+Version 0.13
 
 =cut
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 has 'api_url' => (
     is      => 'rw',
     isa     => 'Str',
-    default => 'https://api.xero.com/',
+    default => 'https://api.xero.com',
 );
 has 'ua' => (
     is      => 'rw',
@@ -37,10 +39,9 @@ has 'ua' => (
     default => sub { new LWP::UserAgent },
 );
 has 'debug' => (
-    is        => 'rw',
-    isa       => 'Bool',
-    default   => 0,
-    predicate => 'is_debug',
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 0,
 );
 has 'error' => (
     is        => 'rw',
@@ -129,9 +130,10 @@ sub login {
             ->from_post_body($res->content);
         $self->request_token($response->token);
         $self->request_secret($response->token_secret);
-        print "Got Request Token ", $response->token, "\n" if $self->is_debug;
-        print "Got Request Token Secret ", $response->token_secret, "\n"
-            if $self->is_debug;
+        print STDERR "Got Request Token ", $response->token, "\n"
+            if $self->debug;
+        print STDERR "Got Request Token Secret ", $response->token_secret, "\n"
+            if $self->debug;
         return
               $self->api_url
             . '/oauth/Authorize?oauth_token='
@@ -177,9 +179,10 @@ sub auth {
             Net::OAuth->response('access token')->from_post_body($res->content);
         $self->access_token($response->token);
         $self->access_secret($response->token_secret);
-        print "Got Access Token ", $response->token, "\n" if $self->is_debug;
-        print "Got Access Token Secret ", $response->token_secret, "\n"
-            if $self->is_debug;
+        print STDERR "Got Access Token ", $response->token, "\n"
+            if $self->debug;
+        print STDERR "Got Access Token Secret ", $response->token_secret, "\n"
+            if $self->debug;
     }
     else {
         $self->error($res->status_line);
@@ -194,13 +197,15 @@ sub auth {
 sub set_cert {
     my ($self, $path) = @_;
 
-    if (-f $path) {
-        open(CERT, '<', $path)
-            or warn("Could not read certificate at: $path: " . $@);
-        my @lines = <CERT>;
-        close CERT;
-        $self->cert(join('\n', @lines));
+    unless (-f $path) {
+        warn("No such file: $path: " . $!);
+        return;
     }
+
+    open(CERT, '<', $path)
+        or warn("Could not read certificate: $path: " . $!);
+    $self->cert(join('', <CERT>));
+    close CERT;
 }
 
 =head2 get_inv_by_ref
@@ -219,9 +224,9 @@ sub get_inv_by_ref {
 =cut
 
 sub create_invoice {
-    my ($self, $data) = @_;
-    $data->{command} = 'create_invoice';
-    return $self->_talk('Invoices', 'POST', $data);
+    my ($self, $hash) = @_;
+    $hash->{command} = 'create_invoice';
+    return $self->_talk('Invoices', 'POST', $hash);
 }
 
 =head2 approve_credit_note
@@ -229,9 +234,9 @@ sub create_invoice {
 =cut
 
 sub approve_credit_note {
-    my ($self, $data) = @_;
-    $data->{command} = 'approve_credit_note';
-    return $self->_talk('CreditNotes', 'POST', $data);
+    my ($self, $hash) = @_;
+    $hash->{command} = 'approve_credit_note';
+    return $self->_talk('CreditNotes', 'POST', $hash);
 }
 
 =head2 get
@@ -239,10 +244,8 @@ sub approve_credit_note {
 =cut
 
 sub get {
-    my ($self, $command, $data) = @_;
-    $data->{command} = $command;
-    my $path = join('', map(ucfirst, split(/_/, $command)));
-    return $self->_talk($path, 'GET', $data);
+    my ($self, $command) = @_;
+    return $self->_talk($command, 'GET');
 }
 
 =head2 post
@@ -250,10 +253,8 @@ sub get {
 =cut
 
 sub post {
-    my ($self, $command, $data) = @_;
-    $data->{command} = $command;
-    my $path = join('', map(ucfirst, split(/_/, $command)));
-    return $self->_talk($path, 'POST', $data);
+    my ($self, $command, $hash) = @_;
+    return $self->_talk($command, 'POST', $hash);
 }
 
 =head2 put
@@ -261,10 +262,8 @@ sub post {
 =cut
 
 sub put {
-    my ($self, $command, $data) = @_;
-    $data->{command} = $command;
-    my $path = join('', map(ucfirst, split(/_/, $command)));
-    return $self->_talk($path, 'PUT', $data);
+    my ($self, $command, $hash) = @_;
+    return $self->_talk($command, 'PUT', $hash);
 }
 
 =head1 INTERNAL API
@@ -277,12 +276,17 @@ normally not need to access this directly.
 =cut
 
 sub _talk {
-    my ($self, $command, $method, $content) = @_;
+    my ($self, $command, $method, $hash) = @_;
 
-    my %opts = (
+    my $path = join('', map(ucfirst, split(/_/, $command)));
+
+    $hash->{command} = $command if ($method =~ m/^(POST|PUT)$/);
+
+    my $request_url = $self->api_url . '/api.xro/2.0/' . $path;
+    my %opts        = (
         consumer_key     => $self->key,
         consumer_secret  => $self->secret,
-        request_url      => $self->api_url . '/api.xro/2.0/' . $command,
+        request_url      => $request_url,
         request_method   => $method,
         signature_method => 'RSA-SHA1',
         timestamp        => time,
@@ -290,37 +294,33 @@ sub _talk {
         token        => $self->access_token,
         token_secret => $self->access_secret,
     );
-    my $request = Net::OAuth->request("protected resource")->new(%opts);
 
-    $request->method($method);
-    if ($content) {
-        $content = $self->_template($content);
-        $request->content($content);
-        $request->header('Content-Type' => 'form_data');
-    }
-
+    my $request     = Net::OAuth->request("protected resource")->new(%opts);
     my $private_key = Crypt::OpenSSL::RSA->new_private_key($self->cert);
     $request->sign($private_key);
 
-    my $res;
-    if ($method =~ /get/i) {
-        $res = $self->ua->request(GET $request->to_url);
-    }
-    elsif ($method =~ /put/i) {
-        $res = $self->ua->request(PUT $request->to_url);
-    }
-    else {
-        $res = $self->ua->request(POST $request->to_url);
+    my $req = HTTP::Request->new($method, $request_url);
+    $req->header(Authorization => $request->to_authorization_header);
+
+    if ($hash) {
+        $req->content('xml=' . uri_escape($self->_template($hash)));
+        $req->header('Content-Type' =>
+                'application/x-www-form-urlencoded; charset=utf-8');
     }
 
+    print STDERR $req->as_string if $self->debug;
+
+    my $res = $self->ua->request($req);
+
     if ($res->is_success) {
-        print "Got Content ", $res->content, "\n" if $self->is_debug;
+        print STDERR "Got Content ", $res->content, "\n" if $self->debug;
         return XMLin($res->content);
     }
     else {
         warn "Something went wrong: " . $res->status_line;
         $self->error($res->status_line . " " . $res->content);
     }
+
     return;
 }
 
@@ -329,12 +329,12 @@ sub _talk {
 =cut
 
 sub _template {
-    my ($self, $data) = @_;
+    my ($self, $hash) = @_;
 
-    $data->{command} .= '.tt';
-    print STDERR Dumper($data) if $self->is_debug;
+    $hash->{command} .= '.tt';
+    print STDERR Dumper($hash) if $self->debug;
     my $t;
-    if ($self->is_debug) {
+    if ($self->debug) {
         $t = Template::Alloy->new(
             DEBUG        => 'DEBUG_ALL',
             INCLUDE_PATH => [ $self->template_path ]);
@@ -343,8 +343,9 @@ sub _template {
         $t = Template::Alloy->new(INCLUDE_PATH => [ $self->template_path ]);
     }
     my $template = '';
-    $t->process('frame.tt', $data, \$template) || die $t->error;
-    print STDERR $template if $self->is_debug;
+    $t->process('frame.tt', $hash, \$template) || die $t->error;
+    print STDERR $template if $self->debug;
+
     return $template;
 }
 
