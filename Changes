@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.15    2012-02-29T21:56:42
+        clear old error message before making next call
+
 0.14    2011-12-10T11:12:13
         removed calculated values from templates, let xero do this
 

@@ -22,11 +22,11 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.14.14
+Version 0.15
 
 =cut
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 has 'api_url' => (
     is      => 'rw',
@@ -47,6 +47,7 @@ has 'error' => (
     is        => 'rw',
     isa       => 'Str',
     predicate => 'has_error',
+    clearer   => 'clear_error',
 );
 has 'key'    => (is => 'rw', isa => 'Str');
 has 'secret' => (is => 'rw', isa => 'Str');
@@ -219,6 +220,16 @@ sub get_inv_by_ref {
     return $self->_talk($path, 'GET');
 }
 
+=head2 get_invoices
+
+=cut
+
+sub get_invoices {
+    my ($self) = @_;
+
+    my $path = 'Invoices';
+}
+
 =head2 create_invoice
 
 =cut
@@ -278,6 +289,8 @@ normally not need to access this directly.
 sub _talk {
     my ($self, $command, $method, $hash) = @_;
 
+    $self->clear_error;
+
     my $path = join('', map(ucfirst, split(/_/, $command)));
 
     $hash->{command} = $command if ($method =~ m/^(POST|PUT)$/);
@@ -324,7 +337,7 @@ sub _talk {
     return;
 }
 
-=head2 talk
+=head2 _template
 
 =cut
 
