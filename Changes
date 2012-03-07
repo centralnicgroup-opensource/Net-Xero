@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.16    2012-03-07T22:44:55
+        added support for search of multiple invoice refs with one call
+
 0.15    2012-02-29T21:56:42
         clear old error message before making next call
 

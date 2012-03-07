@@ -22,11 +22,11 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.15
+Version 0.16
 
 =cut
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 has 'api_url' => (
     is      => 'rw',
@@ -214,9 +214,11 @@ sub set_cert {
 =cut
 
 sub get_inv_by_ref {
-    my ($self, $ref) = @_;
+    my ($self, @ref) = @_;
 
-    my $path = 'Invoices?where=Reference.ToString()=="' . $ref . '"';
+    my $path = 'Invoices?where=Reference.ToString()=="' . (shift @ref) . '"';
+    $path .= ' OR Reference.ToString()=="' . $_ . '"' foreach (@ref);
+
     return $self->_talk($path, 'GET');
 }
 
