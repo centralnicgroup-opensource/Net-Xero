@@ -8,7 +8,8 @@ lib/Net/Xero.pm
 share/Net-Xero/accounts.tt
 share/Net-Xero/approve_credit_note.tt
 share/Net-Xero/create_credit_note.tt
-share/Net-Xero/credit_note.tt
+share/Net-Xero/credit_notes.tt
+share/Net-Xero/manual_journals.tt
 share/Net-Xero/frame.tt
 share/Net-Xero/invoices.tt
 share/Net-Xero/items.tt
