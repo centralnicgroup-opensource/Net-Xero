@@ -1,4 +1,4 @@
-<ManualJournals>
+<ManualJournal>
   <Narration>[% narration %]</Narration>
   <Date>[% date %]</Date>
   <JournalLines>
@@ -16,4 +16,4 @@
     </JournalLine>
   [%- END %]
   </JournalLines>
-</ManualJournals>
+</ManualJournal>
