@@ -22,11 +22,11 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.16
+Version 0.17
 
 =cut
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 has 'api_url' => (
     is      => 'rw',
@@ -227,9 +227,51 @@ sub get_inv_by_ref {
 =cut
 
 sub get_invoices {
-    my ($self) = @_;
+    my ($self, $where) = @_;
 
     my $path = 'Invoices';
+
+    return $self->_talk($path, 'GET') unless (ref $where eq 'HASH');
+
+    $path .= '?where=';
+    my $conjunction =
+        (exists $where->{'conjunction'}) ? uc $where->{'conjunction'} : 'OR';
+    my $first = 1;
+
+    foreach my $key (%{$where}) {
+        $path .= " $conjunction " unless $first;
+
+        given ($key) {
+            when ('reference') {
+                my @refs = @{ $where->{$key} };
+                $path .= 'Reference.ToString()=="' . (shift @refs) . '"';
+                $path .= ' OR Reference.ToString()=="' . $_ . '"'
+                    foreach (@refs);
+            }
+            when ('contact') {
+                my @contacts = @{ $where->{$key} };
+                my $contact  = shift @contacts;
+                $path .= join(
+                    ' AND ',
+                    map {
+                              "Contact."
+                            . ucfirst($_) . '=="'
+                            . $contact->{$_} . '"'
+                        } keys %{$contact});
+
+                # finish foreach
+            }
+            when ('number') {
+                my @numbers = @{ $where->{$key} };
+                $path .= ' OR InvoiceNumber.ToString()=="' . $_ . '"'
+                    foreach (@numbers);
+            }
+        }
+
+        $first = 0;
+    }
+
+    return $self->_talk($path, 'GET');
 }
 
 =head2 create_invoice

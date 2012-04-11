@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.17    2012-04-12T00:19:52
+        added ManualJournal support
+
 0.16    2012-03-07T22:44:55
         added support for search of multiple invoice refs with one call
 
