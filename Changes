@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.18    2012-04-20T12:41:41
+        Bugfix release: fixed encoding issue with uri_escape
+
 0.17    2012-04-12T00:19:52
         added ManualJournal support
 
