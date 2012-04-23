@@ -360,7 +360,7 @@ sub _talk {
     $req->header(Authorization => $request->to_authorization_header);
 
     if ($hash) {
-        $req->content('xml=' . uri_escape_utf8($self->_template($hash)));
+        $req->content('xml=' . uri_escape_utf8($self->_template($hash), "^A-Za-z0-9\-\._~&"));
         $req->header('Content-Type' =>
                 'application/x-www-form-urlencoded; charset=utf-8');
     }
