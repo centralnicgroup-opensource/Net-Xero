@@ -22,11 +22,11 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.18.18.18.17
+Version 0.19.19.18.18.18.17
 
 =cut
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 has 'api_url' => (
     is      => 'rw',

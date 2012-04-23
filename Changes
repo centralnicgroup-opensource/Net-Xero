@@ -1,5 +1,8 @@
 Revision history for Net-Xero
 
+0.19    2012-04-23T14:12:55
+        more bugfixing. uri_escape still not doing exactly what we need
+
 0.18    2012-04-20T12:41:41
         Bugfix release: fixed encoding issue with uri_escape
 
