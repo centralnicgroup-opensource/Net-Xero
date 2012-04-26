@@ -14,6 +14,7 @@ share/Net-Xero/frame.tt
 share/Net-Xero/invoices.tt
 share/Net-Xero/items.tt
 share/Net-Xero/payments.tt
+share/Net-Xero/status_invoice.tt
 t/00-load.t
 t/boilerplate.t
 t/pod-coverage.t

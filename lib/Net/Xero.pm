@@ -294,6 +294,16 @@ sub approve_credit_note {
     return $self->_talk('CreditNotes', 'POST', $hash);
 }
 
+=head2 status_invoice
+
+=cut
+
+sub status_invoice {
+    my ($self, $hash) = @_;
+    $hash->{command} = 'status_invoice';
+    return $self->_talk('Invoices', 'POST', $hash);
+}
+
 =head2 get
 
 =cut
@@ -337,8 +347,6 @@ sub _talk {
 
     my $path = join('', map(ucfirst, split(/_/, $command)));
 
-    $hash->{command} = $command if ($method =~ m/^(POST|PUT)$/);
-
     my $request_url = $self->api_url . '/api.xro/2.0/' . $path;
     my %opts        = (
         consumer_key     => $self->key,
@@ -352,17 +360,26 @@ sub _talk {
         token_secret => $self->access_secret,
     );
 
+    my $content;
+    if ($method =~ m/^(POST|PUT)$/) {
+        $hash->{command} ||= $command;
+        $content = $self->_template($hash);
+        $opts{extra_params} = { xml => $content };
+    }
+
     my $request     = Net::OAuth->request("protected resource")->new(%opts);
     my $private_key = Crypt::OpenSSL::RSA->new_private_key($self->cert);
     $request->sign($private_key);
 
     my $req = HTTP::Request->new($method, $request_url);
-    $req->header(Authorization => $request->to_authorization_header);
 
-    if ($hash) {
-        $req->content('xml=' . uri_escape_utf8($self->_template($hash), "^A-Za-z0-9\-\._~&"));
+    if ($hash and ($method eq 'POST')) {
+        $req->content($request->to_post_body);
         $req->header('Content-Type' =>
                 'application/x-www-form-urlencoded; charset=utf-8');
+    }
+    else {
+        $req->header(Authorization => $request->to_authorization_header);
     }
 
     print STDERR $req->as_string if $self->debug;
