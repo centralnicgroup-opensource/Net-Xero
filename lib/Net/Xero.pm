@@ -364,7 +364,7 @@ sub _talk {
     if ($method =~ m/^(POST|PUT)$/) {
         $hash->{command} ||= $command;
         $content = $self->_template($hash);
-        $opts{extra_params} = { xml => $content };
+        $opts{extra_params} = { xml => $content } if ($method eq 'POST');
     }
 
     my $request     = Net::OAuth->request("protected resource")->new(%opts);
@@ -379,6 +379,7 @@ sub _talk {
                 'application/x-www-form-urlencoded; charset=utf-8');
     }
     else {
+        $req->content($content) if ($hash and ($method eq 'PUT'));
         $req->header(Authorization => $request->to_authorization_header);
     }
 
