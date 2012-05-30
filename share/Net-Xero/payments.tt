@@ -9,5 +9,6 @@
     <Date>[% date %]</Date>
     <Amount>[% amount %]</Amount>
     <CurrencyCode>[% currency %]</CurrencyCode>
+    <Reference>[% reference %]</Reference>
   </Payment>
 </Payments>
