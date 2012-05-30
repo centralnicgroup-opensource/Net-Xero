@@ -4,12 +4,11 @@ use 5.010;
 use Mouse;
 use Net::OAuth;
 use LWP::UserAgent;
-use Template::Alloy;
 use HTTP::Request::Common;
 use Data::Random qw(rand_chars);
 use XML::LibXML::Simple qw(XMLin);
 use File::ShareDir 'dist_dir';
-use Template::Alloy;
+use Template;
 use Crypt::OpenSSL::RSA;
 use URI::Escape;
 use Data::Dumper;
@@ -22,11 +21,11 @@ Net::Xero - The great new Net::Xero!
 
 =head1 VERSION
 
-Version 0.19.19.18.18.18.17
+Version 0.20
 
 =cut
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 has 'api_url' => (
     is      => 'rw',
@@ -408,17 +407,20 @@ sub _template {
 
     $hash->{command} .= '.tt';
     print STDERR Dumper($hash) if $self->debug;
-    my $t;
+    my $tt;
     if ($self->debug) {
-        $t = Template::Alloy->new(
-            DEBUG        => 'DEBUG_ALL',
-            INCLUDE_PATH => [ $self->template_path ]);
+        $tt = Template->new(
+            DEBUG        => 'all',
+            INCLUDE_PATH => [ $self->template_path ],
+        );
     }
     else {
-        $t = Template::Alloy->new(INCLUDE_PATH => [ $self->template_path ]);
+        $tt = Template->new(INCLUDE_PATH => [ $self->template_path ]);
     }
     my $template = '';
-    $t->process('frame.tt', $hash, \$template) || die $t->error;
+    $tt->process('frame.tt', $hash, \$template)
+        || die $tt->error;
+    utf8::encode($template);
     print STDERR $template if $self->debug;
 
     return $template;
