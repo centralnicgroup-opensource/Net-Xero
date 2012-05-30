@@ -1,5 +1,9 @@
 Revision history for Net-Xero
 
+0.20    2012-05-31T01:37:23
+        proper utf8 support
+        added reference field to payments template
+
 0.19    2012-04-23T14:12:55
         more bugfixing. uri_escape still not doing exactly what we need
 
