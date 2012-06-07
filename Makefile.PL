@@ -9,13 +9,12 @@ build_requires 'Test::More';
 
 requires 'Mouse';
 requires 'Net::OAuth';
-requires 'Template::Alloy';
+requires 'Template';
 requires 'LWP::UserAgent';
 requires 'HTTP::Request::Common';
 requires 'Data::Random';
 requires 'XML::LibXML::Simple';
 requires 'File::ShareDir';
-requires 'Template::Alloy';
 requires 'Crypt::OpenSSL::RSA';
 
 

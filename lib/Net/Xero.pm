@@ -410,7 +410,7 @@ sub _template {
     my $tt;
     if ($self->debug) {
         $tt = Template->new(
-            DEBUG        => 'all',
+            #DEBUG        => 'all',
             INCLUDE_PATH => [ $self->template_path ],
         );
     }
